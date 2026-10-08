@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI College Assistant</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #243b6b;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 35px auto;
+        }
+
+        .welcome {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .welcome h2 {
+            color: #243b6b;
+            margin-bottom: 10px;
+        }
+
+        .welcome p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .chat-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .chat-history {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .user-message {
+            background: #e8eefc;
+            margin-left: 40px;
+        }
+
+        .ai-message {
+            background: #f8faff;
+            margin-right: 40px;
+        }
+
+        .message strong {
+            color: #243b6b;
+        }
+
+        .message p {
+            margin-top: 6px;
+        }
+
+        .message ul,
+        .message ol {
+            padding-left: 25px;
+            margin: 10px 0;
+        }
+
+        .message li {
+            margin-bottom: 6px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 15px;
+            border: 1px solid #d5dbe7;
+            border-radius: 10px;
+            resize: vertical;
+            font-size: 15px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #243b6b;
+        }
+
+        button {
+            margin-top: 15px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #243b6b;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1b2f57;
+        }
+
+        .footer {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>🎓 AI College Assistant</h1>
+        <p>Your smart assistant for college and education-related questions</p>
+    </div>
+
+    <div class="container">
+
+        <div class="welcome">
+            <h2>Welcome, Student! 👋</h2>
+
+            <p>
+                Ask me about colleges, courses, admissions, eligibility,
+                scholarships, entrance exams, fees, placements and student life.
+            </p>
+        </div>
+
+        <div class="chat-box">
+
+            <div id="chatHistory" class="chat-history"></div>
+
+            <label for="question">Ask your question</label>
+
+            <textarea
+                id="question"
+                placeholder="Type your question here..."
+            ></textarea>
+
+            <button onclick="askQuestion()">Ask AI Assistant</button>
+
+        </div>
+
+        <div class="footer">
+            AI College Assistant • Student Support System
+        </div>
+
+    </div>
+
+    <script>
+
+        document.getElementById("question").addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter" && !event.shiftKey) {
+
+                event.preventDefault();
+
+                askQuestion();
+            }
+        });
+
+
+        async function askQuestion() {
+
+            const questionBox = document.getElementById("question");
+            const chatHistory = document.getElementById("chatHistory");
+
+            const question = questionBox.value.trim();
+
+
+            if (!question) {
+                return;
+            }
+
+
+            // Show student's message
+            const userMessage = document.createElement("div");
+
+            userMessage.className = "message user-message";
+
+            userMessage.innerHTML =
+                "<strong>You:</strong><p>" +
+                question.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+                "</p>";
+
+            chatHistory.appendChild(userMessage);
+
+
+            // Clear input
+            questionBox.value = "";
+
+
+            // Show thinking message
+            const aiMessage = document.createElement("div");
+
+            aiMessage.className = "message ai-message";
+
+            aiMessage.innerHTML =
+                "<strong>AI Assistant:</strong><p>🤔 Thinking...</p>";
+
+            chatHistory.appendChild(aiMessage);
+
+
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+
+            try {
+
+                const response = await fetch("/ask", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
+
+
+                const data = await response.json();
+
+
+                aiMessage.innerHTML =
+                    "<strong>AI Assistant:</strong>" +
+                    marked.parse(data.answer);
+
+
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+
+            } catch (error) {
+
+                aiMessage.innerHTML =
+                    "<strong>AI Assistant:</strong><p>Sorry, something went wrong. Please try again.</p>";
+            }
+        }
+
+    </script>
+
+</body>
+</html>
